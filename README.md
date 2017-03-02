@@ -48,7 +48,7 @@ Creates Master and Node roles, associates policies to these roles and creates in
 ## To use:
 ```
 1. Install Terraform, jq and AWS cli.
-2. Clone this repo and run the commands below
+2. Clone this repo and change the values in terraform.tfvars as required. (change bucketname to something unique)
 3. terraform fmt && terraform get && terraform plan
 4. terraform apply
 5. bash Scripts/cluster-test.sh - this will notify you once the cluster ready"
