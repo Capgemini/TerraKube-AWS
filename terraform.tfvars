@@ -3,6 +3,7 @@ adminregion = "eu-west-1"
 adminprofile = "default"
 key_name = "terraform"
 public_key_path = "~/.ssh/id_rsa.pub"
+bucketname = "kubernetes-cert"
 
 ##### Module vpc
 
@@ -71,8 +72,6 @@ adminkey = "adminkey.pem"
 
 etcdproxypem = "etcdproxy.pem"
 etcdproxykey = "etcdproxykey.pem"
-
-bucketname = "kubernetes-cert"
 
 ## Route53 module
 k8s-serviceip = "10.3.0.1"
