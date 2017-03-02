@@ -55,6 +55,7 @@ Creates Master and Node roles, associates policies to these roles and creates in
 6. Now wait, and once the clusters ready, "kubectl get nodes" can be run
 7. kubectl apply -f Addons
 8. bash Scripts/dashboard.sh - brings up the kubernetes dashboard via kube proxy
+9. To destroy, first delete kubernetes components (kubectl delete -f ..) and terraform destroy.
 ```
 
 ## Todo:
