@@ -1,0 +1,33 @@
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: wensleydale
+  labels:
+    app: cheese
+    cheese: wensleydale
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cheese
+      task: wensleydale
+  template:
+    metadata:
+      labels:
+        app: cheese
+        task: wensleydale
+        version: v0.0.1
+    spec:
+      containers:
+      - name: cheese
+        image: errm/cheese:wensleydale
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 50Mi
+        ports:
+        - containerPort: 80

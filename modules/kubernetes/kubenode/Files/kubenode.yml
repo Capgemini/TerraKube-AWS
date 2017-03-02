@@ -1,0 +1,215 @@
+#cloud-config
+
+coreos:
+  flannel:
+    interface: $private_ipv4
+    etcd_endpoints: "https://127.0.0.1:2379"
+    etcd_certfile: /etc/ssl/kubernetes/${etcdproxycertobject}
+    etcd_keyfile: /etc/ssl/kubernetes/${etcdproxykeyobject}
+    etcd_cafile: /etc/ssl/kubernetes/${cacertobject}
+  units:
+  - name: etcd2.service
+    command: start
+    enable: true
+    drop-ins:
+    - name: 15-deps.conf
+      content: |
+        [Unit]
+        Description=Etcd2 - unit for etcd
+        Wants=kmsctl-certs.service
+        [Service]
+        PermissionsStartOnly=true
+        RuntimeDirectory=etcd2
+        RuntimeDirectoryMode=0700
+        ExecStartPre=/usr/bin/systemctl --quiet is-active kmsctl-certs.service
+        EnvironmentFile=/etc/etcd-environment
+        Restart=on-failure
+        RestartSec=10
+  - name: kmsctl-certs.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=KMSCtl - download certs
+      [Service]
+      Type=notify
+      NotifyAccess=all
+      RemainAfterExit=yes
+      ExecStartPre=/usr/bin/mkdir -p /opt/bin
+      ExecStartPre=/usr/bin/mkdir -p /var/lib/etcd2
+      ExecStartPre=/usr/bin/mkdir -p /etc/ssl/kubernetes
+      ExecStartPre=/usr/bin/chown -R etcd:etcd /etc/ssl/kubernetes /var/lib/etcd2
+      ExecStartPre=/usr/bin/chmod 0744 /etc/ssl/kubernetes /var/lib/etcd2
+      ExecStartPre=/usr/bin/wget https://github.com/gambol99/kmsctl/releases/download/v1.0.4/kmsctl-linux-amd64 -O /opt/bin/kmsctl
+      ExecStartPre=/usr/bin/chmod +x /opt/bin/kmsctl
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${etcdcertobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${etcdkeyobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${kubenodecertobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${kubenodekeyobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${cacertobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${etcdproxycertobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${etcdproxykeyobject}
+      ExecStartPre=/usr/bin/echo "Completed Cert downloads"
+      ExecStartPre=/usr/bin/bash -c "cp -f /etc/ssl/kubernetes/* /etc/ssl/certs"
+      ExecStartPre=/usr/bin/bash -c "chmod 0644 /etc/ssl/kubernetes/*"
+      ExecStartPre=/usr/bin/chown -R etcd:etcd /etc/ssl/kubernetes /var/lib/etcd2
+      ExecStartPre=/usr/sbin/update-ca-certificates
+      ExecStart=/usr/bin/systemd-notify --ready --status="successfully downloaded the certs"
+      Restart=on-failure
+      RestartSec=10
+      TimeoutStartSec=300
+  - name: kubelet.service
+    command: start
+    content: |
+      [Unit]
+      ConditionFileIsExecutable=/usr/lib/coreos/kubelet-wrapper
+      [Service]
+      Environment="KUBELET_ACI=${ kubernetes_image }"
+      Environment="KUBELET_VERSION=${ kubernetes_version }"
+      Environment="RKT_OPTS=\
+        --volume dns,kind=host,source=/etc/resolv.conf \
+        --mount volume=dns,target=/etc/resolv.conf \
+        --volume rkt,kind=host,source=/opt/bin/host-rkt \
+        --mount volume=rkt,target=/usr/bin/rkt \
+        --volume var-lib-rkt,kind=host,source=/var/lib/rkt \
+        --mount volume=var-lib-rkt,target=/var/lib/rkt \
+        --volume stage,kind=host,source=/tmp \
+        --mount volume=stage,target=/tmp \
+        --volume var-log,kind=host,source=/var/log \
+        --mount volume=var-log,target=/var/log \
+        --volume ssl-certs,kind=host,source=/etc/ssl/kubernetes \
+        --mount volume=ssl-certs,target=/etc/ssl/kubernetes"
+      ExecStartPre=/usr/bin/systemctl --quiet is-active etcd2.service
+      ExecStartPre=/usr/bin/mkdir -p /var/log/containers
+      ExecStartPre=/usr/bin/mkdir -p /var/lib/kubelet
+      ExecStartPre=/usr/bin/mount --bind /var/lib/kubelet /var/lib/kubelet
+      ExecStartPre=/usr/bin/mount --make-shared /var/lib/kubelet
+      ExecStart=/usr/lib/coreos/kubelet-wrapper \
+        --allow-privileged=true \
+        --api-servers=https://${master-elb-dns} \
+        --cloud-provider=aws \
+        --cluster_dns=10.3.0.10 \
+        --cluster_domain=cluster.local \
+        --config=/etc/kubernetes/manifests \
+        --kubeconfig=/etc/kubernetes/kubeconfig.yml \
+        --register-node=true \
+        --tls-cert-file=/etc/ssl/kubernetes/${kubenodecertobject} \
+        --tls-private-key-file=/etc/ssl/kubernetes/${kubenodekeyobject} \
+        --cloud-provider=aws
+      Restart=on-failure
+      RestartSec=5
+      [Install]
+      WantedBy=multi-user.target
+  - name: flanneld.service
+    command: start
+    enable: true
+    drop-ins:
+    - name: 50-network-config.conf
+      content: |
+        [Service]
+        RestartSec=30
+        Restart=on-failure
+        Environment="ETCD_SSL_DIR=/etc/ssl/kubernetes"
+        EnvironmentFile=/etc/etcd-environment
+        EnvironmentFile=/run/flannel/options.env
+        ExecStartPre=/usr/bin/systemctl --quiet is-active etcd2.service
+        ExecStartPre=/usr/bin/systemctl --quiet is-active kmsctl-certs.service
+  - name: docker.service
+    command: start
+    drop-ins:
+      - name: 40-flannel.conf
+        content: |
+          [Unit]
+          After=flanneld.service
+          Requires=flanneld.service
+          [Service]
+          Restart=on-failure
+          RestartSec=10
+
+write_files:
+- path: /opt/bin/host-rkt
+  permissions: 0755
+  owner: root:root
+  content: |
+    #!/bin/sh
+    exec nsenter -m -u -i -n -p -t 1 -- /usr/bin/rkt "$@"
+- path: /etc/profile.env
+  content: |
+    export ETCDCTL_ENDPOINT=https://127.0.0.1:2379
+    export ETCDCTL_CA_FILE=/etc/ssl/kubernetes/${cacertobject}
+    export ETCDCTL_CERT_FILE=/etc/ssl/kubernetes/${etcdcertobject}
+    export ETCDCTL_KEY_FILE=/etc/ssl/kubernetes/${etcdkeyobject}
+    source /etc/etcd-environment
+- path: /etc/etcd-environment
+  permissions: 0644
+  content: |
+    ETCD_TRUSTED_CA_FILE=/etc/ssl/kubernetes/${cacertobject}
+    ETCD_CERT_FILE=/etc/ssl/kubernetes/${etcdproxycertobject}
+    ETCD_KEY_FILE=/etc/ssl/kubernetes/${etcdproxykeyobject}
+    ETCD_PEER_TRUSTED_CA_FILE=/etc/ssl/kubernetes/${cacertobject}
+    ETCD_PEER_CERT_FILE=/etc/ssl/kubernetes/${etcdcertobject}
+    ETCD_PEER_KEY_FILE=/etc/ssl/kubernetes/${etcdkeyobject}
+    ETCD_LISTEN_PEER_URLS=https://0.0.0.0:2380
+    ETCD_LISTEN_CLIENT_URLS=https://0.0.0.0:2379
+    ETCD_CLIENT_CERT_AUTH=true
+    ETCD_PEER_CLIENT_CERT_AUTH=true
+    ETCD_INITIAL_CLUSTER=${etcd_memberlist}
+    ETCD_PROXY=on
+- path: /etc/kubernetes/kubeconfig.yml
+  content: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+    - cluster:
+        certificate-authority: /etc/ssl/kubernetes/${cacertobject}
+      name: local
+    users:
+    - name: kubelet
+      user:
+        client-certificate: /etc/ssl/kubernetes/${kubenodecertobject}
+        client-key: /etc/ssl/kubernetes/${kubenodekeyobject}
+    contexts:
+    - context:
+        cluster: local
+        user: kubelet
+      name: kubelet-context
+    current-context: kubelet-context
+- path: /etc/kubernetes/manifests/kube-proxy.yml
+  content: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: kube-proxy
+      namespace: kube-system
+    spec:
+      hostNetwork: true
+      containers:
+      - name: kube-proxy
+        image: ${ kubernetes_image }:${ kubernetes_version }
+        command:
+        - /hyperkube
+        - proxy
+        - --kubeconfig=/etc/kubernetes/kubeconfig.yml
+        - --master=https://${master-elb-dns}
+        - --proxy-mode=iptables
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - mountPath: /etc/ssl/certs
+            name: "ssl-certs"
+          - mountPath: /etc/kubernetes/kubeconfig.yml
+            name: "kubeconfig"
+            readOnly: true
+          - mountPath: /etc/ssl/kubernetes
+            name: "etc-kube-ssl"
+            readOnly: true
+      volumes:
+        - name: "ssl-certs"
+          hostPath:
+            path: "/usr/share/ca-certificates"
+        - name: "kubeconfig"
+          hostPath:
+            path: "/etc/kubernetes/kubeconfig.yml"
+        - name: "etc-kube-ssl"
+          hostPath:
+            path: "/etc/ssl/kubernetes"

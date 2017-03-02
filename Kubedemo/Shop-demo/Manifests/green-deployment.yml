@@ -1,0 +1,22 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: polyshop-green
+  namespace: polyshop
+  labels:
+    app: polymerjs-shop
+    environment: green
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: polymerjs-shop
+        environment: green
+    spec:
+      containers:
+      - name: polymerjs-shop-green
+        image: arehmandev/polyshop:green
+        ports:
+        - containerPort: 8080

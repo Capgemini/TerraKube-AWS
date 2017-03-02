@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-controller-manager
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: kube-controller-manager
+    image: quay.io/coreos/hyperkube:v1.5.2_coreos.0
+    command:
+    - /hyperkube
+    - controller-manager
+    - --master=http://127.0.0.1:8080
+    - --leader-elect=true
+    - --service-account-private-key-file=/etc/ssl/kubernetes/${masterkeyobject}
+    - --root-ca-file=/etc/ssl/kubernetes/${cacertobject}
+    - --cloud-provider=aws
+    resources:
+      requests:
+        cpu: 200m
+    livenessProbe:
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10252
+      initialDelaySeconds: 15
+      timeoutSeconds: 15
+    volumeMounts:
+    - mountPath: /etc/ssl/kubernetes
+      name: ssl-certs-kubernetes
+      readOnly: true
+  volumes:
+  - hostPath:
+      path: /etc/ssl/kubernetes
+    name: ssl-certs-kubernetes

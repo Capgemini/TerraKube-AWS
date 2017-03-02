@@ -1,0 +1,369 @@
+#cloud-config
+
+coreos:
+  flannel:
+    interface: $private_ipv4
+    etcd_endpoints: "https://127.0.0.1:2379"
+    etcd_certfile: /run/flannel/etcd-proxy.pem
+    etcd_keyfile: /run/flannel/etcd-proxy-key.pem
+    etcd_cafile: /etc/ssl/etcd/platform_ca.pem
+  etcd2:
+    data-dir: /var/lib/etcd2
+    initial-cluster-state: new
+    initial-cluster-token: etcd-dsp-cluster
+    initial-cluster: "{{ .etcd_memberlist }}"
+    cert-file: /run/etcd2/etcd.pem
+    key-file: /run/etcd2/etcd-key.pem
+    peer-cert-file: /run/etcd2/etcd.pem
+    peer-key-file: /run/etcd2/etcd-key.pem
+  update:
+    reboot-strategy: 'off'
+  units:
+  - name: systemd-sysctl.service
+    command: restart
+  - name: iptables-restore.service
+    enable: true
+    command: start
+  - name: format-docker-volume.service
+    command: start
+    content: |
+      [Unit]
+      Description=Formats the docker volume
+      After=dev-xvdd.device
+      Requires=dev-xvdd.device
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/bin/bash -c '/usr/sbin/blkid /dev/xvdd || (/usr/sbin/wipefs -f /dev/xvdd && /usr/sbin/mkfs.ext4 /dev/xvdd)'
+  - name: var-lib-docker.mount
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Mount docker volume
+      Requires=format-docker-volume.service
+      After=format-docker-volume.service
+      Before=docker.service
+      [Mount]
+      What=/dev/xvdd
+      Where=/var/lib/docker
+      Type=ext4
+  - name: fleet.service
+    command: stop
+    enable: false
+  - name: xvde-mkfs.service
+    content: |
+      [Unit]
+      Description=Format /dev/xvde
+      After=dev-xvde.device
+      Requires=dev-xvde.device
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/bash -c '/usr/bin/lsblk -n -o FSTYPE /dev/xvde | grep ext4 || (/usr/sbin/wipefs -f /dev/xvde && /usr/sbin/mkfs.ext4 /dev/xvde)'
+  - name: var-lib-etcd2.mount
+    content: |
+      [Unit]
+      Description=Mount etcd2 data volume
+      Before=etcd2.service
+      After=xvde-mkfs.service
+      [Mount]
+      What=/dev/xvde
+      Where=/var/lib/etcd2
+      Type=ext4
+  - name: var-lib-etcd2.automount
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Auto mount etcd2 data volume
+      [Automount]
+      Where=/var/lib/etcd2
+  - name: smilodon.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Smilodon - manage ebs+eni attachment
+      [Service]
+      Environment="URL={{ .smilodon_release_url }}"
+      Environment="OUTPUT_FILE=/opt/bin/smilodon"
+      Environment="MD5SUM={{ .smilodon_release_md5 }}"
+      EnvironmentFile=/etc/aws-environment
+      ExecStartPre=/usr/bin/mkdir -p /opt/bin
+      ExecStartPre=/usr/bin/bash -c 'until [[ -x ${OUTPUT_FILE} ]] && [[ $(md5sum ${OUTPUT_FILE} | cut -f1 -d" ") == ${MD5SUM} ]]; do wget -q -O ${OUTPUT_FILE} ${URL} && chmod +x ${OUTPUT_FILE}; done'
+      ExecStart=/opt/bin/smilodon --filters=tag:Env=${ENVIRONMENT}
+      Restart=always
+      RestartSec=10
+      TimeoutStartSec=300
+  # This is a dirty workaround hack until this has been fixed: https://github.com/systemd/systemd/issues/1784
+  - name: networkd-restart.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Restart systemd-networkd when DOWN interface is found
+      [Service]
+      ExecStart=/usr/bin/bash -c 'while true; do ip -o -4 link show | grep -q "eth[0-1]:.*state DOWN" && systemctl restart systemd-networkd; sleep 60; done'
+      Restart=always
+      RestartSec=10
+  - name: 20-eth1.network
+    runtime: false
+    content: |
+      [Match]
+      Name=eth1
+      [Network]
+      DHCP=ipv4
+      [DHCP]
+      UseDNS=false
+      SendHostname=true
+      UseRoutes=false
+      RouteMetric=2048
+  - name: docker.service
+    drop-ins:
+    - name: 10-opts.conf
+      content: |
+        [Service]
+        Environment="DOCKER_OPTS=--iptables=false --log-opt max-size=100m --log-opt max-file=1 --default-ulimit=nofile=32768:32768 --default-ulimit=nproc=16384:16384"
+    {{ if is_true .enable_calico -}}
+    - name: 40-flannel.conf
+      content: |
+        [Unit]
+        Requires=flanneld.service
+        After=flanneld.service
+        [Service]
+        ExecStartPre=/usr/bin/cp /run/flannel_docker_opts.env /etc/kubernetes/cni/docker_opts_cni.env{{ end }}
+  - name: etcd2.service
+    command: start
+    enable: true
+    drop-ins:
+    - name: 15-deps.conf
+      content: |
+        [Service]
+        PermissionsStartOnly=true
+        RuntimeDirectory=etcd2
+        RuntimeDirectoryMode=0700
+        EnvironmentFile=/etc/kmsctl
+        EnvironmentFile=/run/smilodon/environment
+        RestartSec=30
+        Restart=always
+        ExecStartPre=/usr/bin/systemctl --quiet is-active update-ca-certificates.service
+        ExecStartPre=/usr/bin/systemctl --quiet is-active install-kmsctl.service
+        ExecStartPre=/opt/bin/kmsctl get --output-dir %t/etcd2 --recursive=true secure/etcd
+        ExecStartPre=/usr/bin/chown -R etcd:etcd /var/lib/etcd2 %t/etcd2
+        ExecStart=
+        ExecStart=/usr/bin/etcd2 --name=node${NODE_ID} \
+          --initial-advertise-peer-urls=https://${NODE_IP}:2380 \
+          --listen-peer-urls=https://${NODE_IP}:2380 \
+          --listen-client-urls=https://${NODE_IP}:2379,https://127.0.0.1:2379 \
+          --advertise-client-urls=https://${NODE_IP}:2379
+  - name: flanneld.service
+    command: start
+    enable: true
+    drop-ins:
+    - name: 100-etcd-certificates.conf
+      content: |
+        [Service]
+        RestartSec=30
+        Restart=always
+        EnvironmentFile=/etc/kmsctl
+
+        ExecStartPre=/usr/bin/systemctl --quiet is-active install-kmsctl.service
+        ExecStartPre=/usr/bin/systemctl --quiet is-active update-ca-certificates.service
+        ExecStartPre=/opt/bin/kmsctl get --output-dir=/run/flannel --recursive=true common/
+    - name: 50-network-config.conf
+      content: |
+        [Service]
+        EnvironmentFile="/run/flannel/options.env"
+
+        ExecStartPre=/usr/bin/etcdctl --peers ${FLANNELD_ETCD_ENDPOINTS} set /coreos.com/network/config '{"Network":"{{ .flannel_cidr }}","Backend":{"Type":"vxlan"}}'
+  - name: install-kmsctl.service
+    command: start
+    content: |
+      [Unit]
+      Description=Install kmsctl
+      Documentation=https://github.com/gambol99/kmsctl
+
+      [Service]
+      Type=notify
+      NotifyAccess=all
+      RemainAfterExit=yes
+      TimeoutStartSec=180
+      Environment="URL={{ .kmsctl_release_url }}"
+      Environment="FILE=/opt/bin/kmsctl"
+      Environment="MD5SUM={{ .kmsctl_release_md5 }}"
+      ExecStartPre=/usr/bin/mkdir -p /opt/bin
+      ExecStartPre=/usr/bin/bash -c 'until [[ -x ${FILE} ]] && [[ $(md5sum ${FILE} | cut -f1 -d" ") == ${MD5SUM} ]]; do wget -q -O ${FILE}.gz ${URL} && gunzip ${FILE}.gz && chmod +x ${FILE}; done'
+      ExecStart=/usr/bin/systemd-notify --ready --status="succussfully downloaded the kmsctl"
+  - name: update-ca-certificates.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Update CA Certificates
+      Requires=install-kmsctl.service
+      After=install-kmsctl.service
+
+      [Service]
+      Type=notify
+      NotifyAccess=all
+      EnvironmentFile=/etc/environment
+      EnvironmentFile=/etc/kmsctl
+      RemainAfterExit=yes
+      TimeoutStartSec=300
+      ExecStartPre=/usr/bin/mkdir -p /etc/ssl/etcd
+      ExecStartPre=/opt/bin/kmsctl get --output-dir=/etc/ssl/certs common/platform_ca.pem
+      ExecStartPre=/usr/bin/cp -f /etc/ssl/certs/platform_ca.pem /etc/ssl/etcd/platform_ca.pem
+      ExecStartPre=/usr/sbin/update-ca-certificates
+      ExecStart=/usr/bin/systemd-notify --ready --status="succussfully updated the ca root certificates"
+  - name: update-engine.service
+    command: stop
+    enable: false
+  - name: kubelet.service
+    command: start
+    content: |
+      [Unit]
+      Description=Kubernetes Kubelet
+      Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+      [Service]
+      Restart=always
+      RestartSec=10
+      RuntimeDirectory=kubelet
+      RuntimeDirectoryMode=0700
+      Environment=KUBELET_IMAGE_TAG={{ .kubernetes_version }}
+      Environment=KUBELET_IMAGE_URL={{ .kubernetes_image }}
+      EnvironmentFile=/etc/environment
+      Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
+        --volume dns,kind=host,source=/etc/resolv.conf \
+        --mount volume=dns,target=/etc/resolv.conf \
+        --volume=etc-ssl-certs,kind=host,source=/etc/ssl/certs \
+        --mount volume=etc-ssl-certs,target=/etc/ssl/certs \
+        --volume var-lib-rkt,kind=host,source=/var/lib/rkt \
+        --mount volume=var-lib-rkt,target=/var/lib/rkt \
+        --volume stage,kind=host,source=/tmp \
+        --mount volume=stage,target=/tmp \
+        --volume var-log,kind=host,source=/var/log \
+        --mount volume=var-log,target=/var/log \
+        --volume cni-bin,kind=host,source=/opt/cni/bin \
+        --mount volume=cni-bin,target=/opt/cni/bin"
+
+      ExecStartPre=/usr/sbin/modprobe br_netfilter
+      ExecStartPre=/usr/bin/systemctl --quiet is-active update-ca-certificates.service
+      ExecStartPre=/usr/bin/systemctl --quiet is-active flanneld.service
+      ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests /opt/cni/bin
+      ExecStart=/usr/lib/coreos/kubelet-wrapper \
+        --address=0.0.0.0 \
+        --allow-privileged=true \
+        --api-servers=http://127.0.0.1:8080 \
+        --cloud-config=/etc/kubernetes/cloud.cfg \
+        --cloud-provider=aws \
+        --cluster-dns=10.200.0.10 \
+        --cluster-domain=cluster.local \
+        {{- if is_true .enable_calico -}}
+        --cni-conf-dir=/etc/kubernetes/cni/net.d \
+        {{- end }}
+        --cpu-cfs-quota=true \
+        --host-network-sources=* \
+        --hostname-override=${COREOS_PRIVATE_IPV4} \
+        --image-gc-high-threshold=60 \
+        --image-gc-low-threshold=40 \
+        --logtostderr=true \
+        --maximum-dead-containers-per-container=1 \
+        --maximum-dead-containers=10 \
+        {{- if is_true .enable_calico -}}
+        --network-plugin=cni \
+        {{- end }}
+        --node-labels="role=master" \
+        --pod-manifest-path=/etc/kubernetes/manifests \
+        --register-schedulable=false \
+        --system-reserved=cpu=50m,memory=100Mi
+
+      ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
+write_files:
+- path: /etc/kubernetes/cloud.cfg
+  permissions: 0444
+  owner: root
+  content: |
+    [Global]
+    KubernetesClusterTag = "{{ .environment }}"
+    DisableSecurityGroupIngress = true
+{{- if is_true .enable_calico -}}
+- path: /etc/kubernetes/cni/net.d/10-flannel.conf
+  permissions: 0444
+  owner: root
+  content: |
+    {
+      "name": "podnet",
+      "type": "flannel",
+      "delegate": {
+        "isDefaultGateway": true
+      }
+    }
+{{- end }}
+- path: /etc/kmsctl
+  content: |
+    AWS_S3_BUCKET={{ .secrets_bucket_name }}
+    AWS_DEFAULT_REGION={{ .aws_region }}
+- path: /etc/aws-environment
+  permissions: 0444
+  content: |
+    AWS_REGION={{ .aws_region }}
+    DNS_ZONE_NAME={{ .private_zone_name }}
+    ENVIRONMENT={{ .environment }}
+- path: /etc/kubernetes/manifests/kube-manifests.yaml
+  permissions: 0444
+  owner: root
+  content: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: kube-manifests
+      namespace: kube-system
+    spec:
+      hostNetwork: true
+      containers:
+      - name: manifests
+        image: {{ .kmsctl_image }}
+        args:
+        - --region={{ .aws_region }}
+        - get
+        - --output-dir=/etc/kubernetes/manifests
+        - --bucket={{ .secrets_bucket_name }}
+        - --sync=true
+        - --recursive=true
+        - manifests/secure
+        - manifests/common
+        volumeMounts:
+        - name: manifests
+          mountPath: /etc/kubernetes/manifests
+      volumes:
+      - name: manifests
+        hostPath:
+          path: /etc/kubernetes/manifests
+# Note: the newline post COMMIT is required by iptables-restore
+- path: /var/lib/iptables/rules-save
+  content: |
+    *filter
+    :INPUT ACCEPT [0:0]
+    :FORWARD ACCEPT [0:0]
+    -A FORWARD -d 169.254.169.254/32 -i docker0 -p tcp -m tcp -j DROP
+    -A FORWARD -i docker0 -p tcp -m tcp --dport 2379 -j DROP
+    :OUTPUT ACCEPT [0:0]
+    COMMIT
+
+- path: /etc/udev/rules.d/10-xvde-block.rules
+  content: |
+    ACTION=="add", ENV{DEVNAME}=="/dev/xvde", SUBSYSTEM=="block", TAG+="systemd", ENV{SYSTEMD_WANTS}="xvde-mkfs.service"
+- path: /etc/sysctl.d/10-disable-ipv6.conf
+  permissions: 0644
+  owner: root
+  content: |
+    net.ipv6.conf.all.disable_ipv6 = 1
+- path: /etc/sysctl.d/baselayout.conf
+  permissions: 0644
+  owner: root
+  content: |
+    net.ipv4.ip_forward = 1
+    net.ipv4.conf.default.rp_filter = 2
+    net.ipv4.conf.all.rp_filter = 2
+    kernel.kptr_restrict = 1

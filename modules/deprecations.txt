@@ -1,0 +1,2 @@
+Flag --api-servers has been deprecated, Use --kubeconfig instead.
+Flag --config has been deprecated, Use --pod-manifest-path instead

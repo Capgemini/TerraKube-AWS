@@ -1,0 +1,96 @@
+#cloud-config
+
+coreos:
+  units:
+  - name: systemd-sysctl.service
+    command: restart
+  - name: networkd-restart.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Restart systemd-networkd when DOWN interface is found
+      [Service]
+      ExecStart=/usr/bin/bash -c 'while true; do ip -o -4 link show | grep -q "eth[0-1]:.*state DOWN" && systemctl restart systemd-networkd; sleep 60; done'
+      Restart=always
+      RestartSec=10
+  - name: 20-eth1.network
+    runtime: false
+    content: |
+      [Match]
+      Name=eth1
+      [Network]
+      DHCP=ipv4
+      [DHCP]
+      UseDNS=false
+      SendHostname=true
+      UseRoutes=false
+      RouteMetric=2048
+  - name: docker.service
+    drop-ins:
+    - name: 10-opts.conf
+      content: |
+        [Service]
+        Environment="DOCKER_OPTS=--iptables=false --log-opt max-size=100m --log-opt max-file=1 --default-ulimit=nofile=32768:32768 --default-ulimit=nproc=16384:16384"
+  - name: smilodon.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Smilodon - manage ebs+eni attachment
+      [Service]
+      Environment="URL=${smilodon_release_url}"
+      Environment="OUTPUT_FILE=/opt/bin/smilodon"
+      Environment="MD5SUM=${smilodon_release_md5}"
+      EnvironmentFile=/etc/aws-environment
+      ExecStartPre=/usr/bin/mkdir -p /opt/bin
+      ExecStartPre=/usr/bin/bash -c 'until [[ -x $${OUTPUT_FILE} ]] && [[ $(md5sum $${OUTPUT_FILE} | cut -f1 -d" ") == $${MD5SUM} ]]; do wget -q -O $${OUTPUT_FILE} $${URL} && chmod +x $${OUTPUT_FILE}; done'
+      ExecStart=/opt/bin/smilodon --filters=tag:Env=${environment}
+      Restart=on-failure
+      RestartSec=300
+  - name: kmsctl-certs.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=KMSCtl - download certs
+      [Service]
+      ExecStartPre=/usr/bin/mkdir -p /opt/bin
+      ExecStartPre=/usr/bin/mkdir -p /var/lib/etcd2
+      ExecStartPre=/usr/bin/mkdir -p /etc/ssl/kubernetes
+      ExecStartPre=/usr/bin/chown -R etcd:etcd /etc/ssl/kubernetes /var/lib/etcd2
+      ExecStartPre=/usr/bin/chmod 0744 /etc/ssl/kubernetes /var/lib/etcd2
+      ExecStartPre=/usr/bin/wget https://github.com/gambol99/kmsctl/releases/download/v1.0.4/kmsctl-linux-amd64 -O /opt/bin/kmsctl
+      ExecStartPre=/usr/bin/chmod +x /opt/bin/kmsctl
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${etcdcertobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${etcdkeyobject}
+      ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${cacertobject}
+      ExecStartPre=/usr/bin/chmod 0644 /etc/ssl/kubernetes/${etcdcertobject} /etc/ssl/kubernetes/${etcdkeyobject} /etc/ssl/kubernetes/${cacertobject}
+      ExecStartPre=/usr/bin/bash -c "cp -f /etc/ssl/kubernetes/* /etc/ssl/certs"
+      ExecStartPre=/usr/sbin/update-ca-certificates
+      ExecStartPre=/usr/bin/chown -R etcd:etcd /etc/ssl/kubernetes /var/lib/etcd2
+      ExecStart=/usr/bin/echo "Completed Cert downloads"
+      Restart=always
+      RestartSec=10
+      TimeoutStartSec=300
+
+write_files:
+- path: /etc/sysctl.d/10-disable-ipv6.conf
+  permissions: 0644
+  owner: root
+  content: |
+    net.ipv6.conf.all.disable_ipv6 = 1
+- path: /etc/sysctl.d/baselayout.conf
+  permissions: 0644
+  owner: root
+  content: |
+    net.ipv4.ip_forward = 1
+    net.ipv4.conf.default.rp_filter = 2
+    net.ipv4.conf.all.rp_filter = 2
+    kernel.kptr_restrict = 1
+- path: /etc/aws-environment
+  permissions: 0444
+  content: |
+    AWS_REGION=${region}
+    DNS_ZONE_NAME=${zonename}
+    ENVIRONMENT=${environment}

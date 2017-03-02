@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: shop2
+  namespace: polyshop
+spec:
+  rules:
+  - host: shop2.capgemini-demo.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: shop2
+          servicePort: http
