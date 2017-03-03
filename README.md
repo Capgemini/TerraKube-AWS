@@ -51,7 +51,7 @@ Creates Master and Node roles, associates policies to these roles and creates in
 2. Clone this repo and change the values in terraform.tfvars as required. (change bucketname to something unique)
 3. terraform fmt && terraform get && terraform plan
 4. terraform apply
-5. bash Scripts/cluster-test.sh - this will notify you once the cluster ready"
+5. bash Scripts/cluster-test.sh - this will notify you once the cluster is ready
 6. Now wait, and once the clusters ready, "kubectl get nodes" can be run
 7. kubectl apply -f Addons
 8. bash Scripts/dashboard.sh - brings up the kubernetes dashboard via kube proxy
