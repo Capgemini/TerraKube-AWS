@@ -52,17 +52,19 @@ Creates Master and Node roles, associates policies to these roles and creates in
 3. To create cluster - make all. (This may take some time.)
 7. To see cluster-info - make info
 8. To bring up dashboard - make dashboard
-9. To destroy - make destroy
+9. To destroy - make destroy, please ensure you kubectl delete any services (ELB) prior to this.
 ```
 
 ## Todo:
 
 - Document how each module works and the general structure
-- Add remote state for S3 support, add Terragrunt integration
 - Clean up the variables, and add optional cool lambda, OpenVPN and other addon modules.
 
+To push state to remote S3 and generate a Terragrunt config file:
 
-To run a quick demo run:
+'make remote-state'
+
+To run a quick kubedemo run:
 
 'make demo'
 

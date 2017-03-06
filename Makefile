@@ -37,6 +37,7 @@ destroy:
 	@-pkill -f "kubectl proxy" ||:
 	terraform destroy
 	@-rm -rf .terraform ||:
+	@-rm -rf .terragrunt ||:
 	@-rm -f Certs/*
 	@echo "${BLUE}❤ Kubernetes cluster has been deleted ${NC}"
 
@@ -61,6 +62,18 @@ prereqs:
 	kubectl version --client
 	@echo
 	terraform --version
+
+remote-state:
+	@echo "${GREEN}✓ Creating remote state bucket ${NC}\n"
+	bash Scripts/remote-state.sh
+	@echo "${GREEN}✓ Success! Note: Upon external changes, run terraform remote pull ${NC}\n"
+
+terragrunt:
+	@echo "${GREEN}✓ First install terragrunt before proceeding ${NC}\n"
+	terragrunt -v
+	cat .terragrunt
+	@echo "${GREEN}✓ Looks like terragrunts configured, try terragrunt plan ${NC}\n"
+	@echo "${GREEN}✓ For more info: github.com/gruntwork-io/terragrunt  ${NC}\n"
 
 test-deployment:
 	kubectl create -f Kubedemo/Busybox
