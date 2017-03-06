@@ -27,6 +27,12 @@ apply:
 dashboard:
 	bash Scripts/dashboard.sh
 
+demo:
+	kubectl create -f Kubedemo/Traefik-demo
+	kubectl create -f Kubedemo/Traefik-demo/weave
+	@echo "${GREEN}✓ Demo has been successfully deployed ${NC}\n"
+
+
 destroy:
 	@-pkill -f "kubectl proxy" ||:
 	terraform destroy
