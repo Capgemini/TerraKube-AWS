@@ -70,9 +70,9 @@ Creates Master and Node roles, associates policies to these roles and creates in
 
 ```
 'make demo'
-
-This will be further documented later. Demo includes use of Traefik as Ingress controller. Future plans to include DroneCI.
 ```
+This will be further documented later. Demo includes use of Traefik as Ingress controller. Future plans to include DroneCI.
+
 
 ## Todo:
 
