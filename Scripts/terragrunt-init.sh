@@ -1,5 +1,8 @@
 #!/bin/bash
 
+BUCKET=$(cat Scripts/statebucket.txt)
+REGION=$(terraform output default_region)
+
 cat > .terragrunt <<EOF
 # Configure Terragrunt to use DynamoDB for locking
 lock = {
