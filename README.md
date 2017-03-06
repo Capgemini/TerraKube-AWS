@@ -9,6 +9,25 @@ TerraKube is completely provisioned through Terraform, cloud-config systemd unit
 
 TerraKube is also of the few examples of a Kubernetes cluster running with Masters in an autoscaling group as well as Nodes. (for self-healing purposes - This drew inspiration from the Home Office DSP (Digital Services Platform) and tooling (smilodon. kmsctl).
 
+
+## To use:
+```
+1. Install Terraform, jq and AWS cli.
+2. Change the values in terraform.tfvars as required - change bucketname to something unique.
+3. To create cluster - make all. (This may take some time.)
+7. To see cluster-info - make info
+8. To bring up dashboard - make dashboard
+9. To destroy - make destroy, please ensure you kubectl delete any services (ELB) prior to this.
+```
+
+## To push state to remote S3 and generate a Terragrunt config file:
+
+```
+'make create-remote' && 'make terragrunt'
+
+To delete remote state bucket: 'make delete-remote'
+```
+
 ## General structure - in depth will be done later:
 
 ### VPC module:
@@ -45,30 +64,12 @@ A module that ended up being rather simple after figuring out the complexities o
 
 Creates Master and Node roles, associates policies to these roles and creates instance profiles.
 
-## To use:
-```
-1. Install Terraform, jq and AWS cli.
-2. Change the values in terraform.tfvars as required - change bucketname to something unique.
-3. To create cluster - make all. (This may take some time.)
-7. To see cluster-info - make info
-8. To bring up dashboard - make dashboard
-9. To destroy - make destroy, please ensure you kubectl delete any services (ELB) prior to this.
-```
-
-## To push state to remote S3 and generate a Terragrunt config file:
-
-```
-'make create-remote' && 'make terragrunt'
-
-To delete remote state bucket: 'make delete-remote'
-```
-
-## To run a quick kubedemo run:
+## To run a quick kubedemo upon creating cluster:
 
 ```
 'make demo'
 
-This will be further documented later.
+This will be further documented later. Demo includes use of Traefik as Ingress controller. Future plans to include DroneCI.
 ```
 
 ## Todo:
