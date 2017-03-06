@@ -64,7 +64,7 @@ Creates Master and Node roles, associates policies to these roles and creates in
 
 To run a quick demo run:
 
-kubectl apply -f Kubedemo/Traefik-demo
+'make demo'
 
 This will be further documented later.
 
