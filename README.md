@@ -60,17 +60,21 @@ Creates Master and Node roles, associates policies to these roles and creates in
 - Document how each module works and the general structure
 - Clean up the variables, and add optional cool lambda, OpenVPN and other addon modules.
 
-To push state to remote S3 and generate a Terragrunt config file:
+## To push state to remote S3 and generate a Terragrunt config file:
 
+```
 'make create-remote' && 'make terragrunt'
 
 To delete remote state bucket: 'make delete-remote'
+```
 
-To run a quick kubedemo run:
+## To run a quick kubedemo run:
 
+```
 'make demo'
 
 This will be further documented later.
+```
 
 -------------------------
 
