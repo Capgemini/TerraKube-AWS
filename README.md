@@ -11,13 +11,15 @@ TerraKube is also of the few examples of a Kubernetes cluster running with Maste
 
 
 ## To use:
+
+Prerequisites: Install Terraform, jq and AWS cli. Have access to BASH!
+
 ```
-1. Install Terraform, jq and AWS cli.
-2. Change the values in terraform.tfvars as required - change bucketname to something unique.
-3. To create cluster - make all. (This may take some time.)
-7. To see cluster-info - make info
-8. To bring up dashboard - make dashboard
-9. To destroy - make destroy, please ensure you kubectl delete any services (ELB) prior to this.
+1. Change the values in terraform.tfvars as required - change bucketname to something unique.
+2. To create cluster - make all. (This may take some time.)
+3. To see cluster-info - make info
+4. To bring up dashboard - make dashboard
+5. To destroy - make destroy, please ensure you kubectl delete any services (ELB) prior to this.
 ```
 
 ## To push state to remote S3 and generate a Terragrunt config file:
@@ -25,7 +27,7 @@ TerraKube is also of the few examples of a Kubernetes cluster running with Maste
 ```
 'make create-remote' && 'make terragrunt'
 
-To delete remote state bucket: 'make delete-remote'
+To delete remote state bucket: 'make delete-remote' - careful with this one.
 ```
 
 ## General structure - in depth will be done later:
