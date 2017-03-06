@@ -48,20 +48,17 @@ Creates Master and Node roles, associates policies to these roles and creates in
 ## To use:
 ```
 1. Install Terraform, jq and AWS cli.
-2. Clone this repo and change the values in terraform.tfvars as required. (change bucketname to something unique)
-3. terraform fmt && terraform get && terraform plan
-4. terraform apply
-5. bash Scripts/cluster-test.sh - this will notify you once the cluster ready"
-6. Now wait, and once the clusters ready, "kubectl get nodes" can be run
-7. kubectl apply -f Addons
-8. bash Scripts/dashboard.sh - brings up the kubernetes dashboard via kube proxy
-9. To destroy, first delete kubernetes components (kubectl delete -f ..) and terraform destroy.
+2. Change the values in terraform.tfvars as required - change bucketname to something unique.
+3. To create cluster - make all. (This may take some time.)
+7. To see cluster-info - make info
+8. To bring up dashboard - make dashboard
+9. To destroy - make destroy
 ```
 
 ## Todo:
 
-- The above will be made into a nice Makefile once some final adjustments have been made 
 - Document how each module works and the general structure
+- Add remote state for S3 support, add Terragrunt integration
 - Clean up the variables, and add optional cool lambda, OpenVPN and other addon modules.
 
 
@@ -109,4 +106,4 @@ vaijab
 
 CoreOS official documentation
 
-This repo was formerly github.com/arehmandev/TerraKube-AWS/ 
+This repo was formerly github.com/arehmandev/TerraKube-AWS/
