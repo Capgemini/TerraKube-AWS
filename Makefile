@@ -63,18 +63,6 @@ prereqs:
 	@echo
 	terraform --version
 
-remote-state:
-	@echo "${GREEN}✓ Creating remote state bucket ${NC}\n"
-	bash Scripts/remote-state.sh
-	@echo "${GREEN}✓ Success! Note: Upon external changes, run terraform remote pull ${NC}\n"
-
-terragrunt:
-	@echo "${GREEN}✓ First install terragrunt before proceeding ${NC}\n"
-	terragrunt -v
-	cat .terragrunt
-	@echo "${GREEN}✓ Looks like terragrunts configured, try terragrunt plan ${NC}\n"
-	@echo "${GREEN}✓ For more info: github.com/gruntwork-io/terragrunt  ${NC}\n"
-
 test-deployment:
 	kubectl create -f Kubedemo/Busybox
 
@@ -83,3 +71,23 @@ test-dns:
 
 wait-for-cluster:
 	bash Scripts/cluster-test.sh
+
+
+#### For remote state and terragrunt
+
+create-remote:
+	@echo "${GREEN}✓ Creating remote state bucket ${NC}\n"
+	bash Scripts/remote-state.sh
+	@echo "${GREEN}✓ Success! Note: Upon external changes, run terraform remote pull ${NC}\n"
+
+delete-remote:
+	@echo "${GREEN}✓ Deleting remote state bucket ${NC}\n"
+	bash Scripts/delete-statebucket.sh
+	@echo "${GREEN}✓ Success! Remote state bucket deleted. Note: AWS has a delay for cross-region bucket namespacing ${NC}\n"
+
+terragrunt:
+	bash Scripts/terragrunt-init.sh
+	@echo "${GREEN}✓ First install terragrunt before proceeding ${NC}\n"
+	terragrunt -v
+	@echo "${GREEN}✓ Looks like terragrunts configured, try terragrunt plan ${NC}\n"
+	@echo "${GREEN}✓ For more info: github.com/gruntwork-io/terragrunt  ${NC}\n"

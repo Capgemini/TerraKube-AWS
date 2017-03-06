@@ -62,7 +62,9 @@ Creates Master and Node roles, associates policies to these roles and creates in
 
 To push state to remote S3 and generate a Terragrunt config file:
 
-'make remote-state'
+'make create-remote' && 'make terragrunt'
+
+To delete remote state bucket: 'make delete-remote'
 
 To run a quick kubedemo run:
 
