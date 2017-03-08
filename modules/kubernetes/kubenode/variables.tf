@@ -106,3 +106,5 @@ variable "master_elb_dns" {}
 variable "dns-service-ip" {}
 
 variable "cluster-domain" {}
+
+variable "placement_group" {}

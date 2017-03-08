@@ -56,6 +56,11 @@ variable "pod-ip-range" {
   description = "The CIDR network to use for pod IPs"
 }
 
+variable "placement_group" {
+  description = "Boolean value, set to true if wanting to host kubenodes in an AWS placement group for low inter-pod latency (nodes in same rack)"
+  default = "false"
+}
+
 # AMI info
 
 variable "ownerid" {

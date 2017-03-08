@@ -62,7 +62,48 @@ resource "aws_launch_configuration" "launch_config" {
   }
 }
 
+### This ASG and placement group is created if var.placement_group = true
+
+resource "aws_placement_group" "kubenodes" {
+  count    = "${var.placement_group == "true" ? 1 : 0}"
+  name     = "kubenodes"
+  strategy = "cluster"
+}
+
 resource "aws_autoscaling_group" "kubenode" {
+  count           = "${var.placement_group == "true" ? 1 : 0}"
+  depends_on      = ["aws_launch_configuration.launch_config"]
+  name            = "${var.asg_name}"
+  placement_group = "${aws_placement_group.kubenodes.id}"
+
+  availability_zones  = ["${var.azs}"]
+  vpc_zone_identifier = ["${var.subnet_azs}"]
+
+  launch_configuration = "${aws_launch_configuration.launch_config.id}"
+
+  max_size                  = "${var.asg_maximum_number_of_instances}"
+  min_size                  = "${var.asg_minimum_number_of_instances}"
+  desired_capacity          = "${var.asg_number_of_instances}"
+  health_check_grace_period = "${var.health_check_grace_period}"
+  health_check_type         = "${var.health_check_type}"
+
+  tag {
+    key                 = "Name"
+    value               = "kubenode"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "KubernetesCluster"
+    value               = "${var.name}"
+    propagate_at_launch = true
+  }
+}
+
+### This ASG is created if var.placement_group = false
+
+resource "aws_autoscaling_group" "kubenode_noplacementgroup" {
+  count      = "${var.placement_group == "true" ? 0 : 1}"
   depends_on = ["aws_launch_configuration.launch_config"]
   name       = "${var.asg_name}"
 

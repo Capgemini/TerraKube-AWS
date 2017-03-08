@@ -243,6 +243,7 @@ module "kubenode" {
   security_group       = "${module.security.aws_security_group.bastion}"
   userdata             = "Files/kubenode.yml"
 
+  placement_group                 = "${var.placement_group}"
   asg_name                        = "${var.kubenode_asg_name}"
   asg_number_of_instances         = "${var.kubenode_asg_number_of_instances}"
   asg_maximum_number_of_instances = "${var.kubenode_asg_maximum_number_of_instances}"
