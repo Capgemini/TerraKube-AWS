@@ -5,6 +5,75 @@ key_name = "terraform"
 public_key_path = "~/.ssh/id_rsa.pub"
 bucketname = "kubernetes-cert"
 
+### Cluster specifications
+cluster-name = "terrakube"
+## Template variables
+cluster-domain           = "cluster.local"
+dns-service-ip           = "10.3.0.10"
+kubernetes_image         = "quay.io/coreos/hyperkube:v1.5.2_coreos.0"
+pod-ip-range             = "10.2.0.0/16"
+service-cluster-ip-range = "10.3.0.0/24"
+
+# AMI info
+ownerid = "595879546273"
+ami_name = "CoreOS"
+channel = "stable"
+virtualization_type ="hvm"
+
+# Kubenode and bastion Autoscaling groups
+kubenode_ami_size = "t2.micro"
+kubenode_asg_name = "kubenode-asg"
+kubenode_asg_number_of_instances = "3"
+kubenode_asg_minimum_number_of_instances = "3"
+kubenode_asg_maximum_number_of_instances = "3"
+
+bastion_ami_size = "t2.micro"
+bastion_asg_name = "kubebastion-asg"
+bastion_asg_number_of_instances = "1"
+bastion_asg_minimum_number_of_instances = "1"
+bastion_asg_maximum_number_of_instances = "1"
+
+###### kubenode and bastion modules
+# Launch configs
+bastion_lc_name = "kubebastion-lc"
+kubenode_lc_name = "kubenode-lc"
+
+###### Etcd module
+
+# Launch config
+etcdlc_name = "Etcd-lc"
+
+# Node IPs - must always be an odd number of etcd nodes (default 3)
+etcd_nodes_az1 = {
+  "node0" = "10.0.0.10"
+}
+
+etcd_nodes_az2 = {
+  "node1" = "10.0.1.10"
+}
+
+etcd_nodes_az3 = {
+  "node2" = "10.0.2.10"
+}
+
+# Autoscaling groups
+etcd_ami_size = "t2.micro"
+etcd_asg_name_az1 = "Etcd-asg1"
+etcd_asg_maxsize_az1 = "1"
+etcd_asg_minsize_az1 = "1"
+etcd_asg_normsize_az1 = "1"
+
+etcd_asg_name_az2 = "Etcd-asg2"
+etcd_asg_maxsize_az2 = "1"
+etcd_asg_minsize_az2 = "1"
+etcd_asg_normsize_az2 = "1"
+
+etcd_asg_name_az3 = "Etcd-asg3"
+etcd_asg_maxsize_az3 = "1"
+etcd_asg_minsize_az3 = "1"
+etcd_asg_normsize_az3 = "1"
+
+
 ##### Module vpc
 
 #VPC Networking
@@ -51,8 +120,6 @@ iplock = "0.0.0.0/0"
 
 ### Module route53
 internal-tld = "terrakube.com"
-cluster-name = "terrakube"
-
 
 ### Module tls and s3
 capem = "ca.pem"
@@ -74,77 +141,8 @@ etcdproxypem = "etcdproxy.pem"
 etcdproxykey = "etcdproxykey.pem"
 
 ## Route53 module
-k8s-serviceip = "10.3.0.1"
+#Empty for now
 
 ## IAM module
 master_role_name = "master_role"
 worker_role_name = "worker_role"
-
-
-###### Etcd module
-
-# Launch config
-etcdlc_name = "Etcd-lc"
-coresize = "t2.micro"
-ownerid = "595879546273"
-ami_name = "CoreOS"
-channel = "stable"
-virtualization_type ="hvm"
-
-# Node IPs - must always be an odd number of etcd nodes (default 3)
-etcd_nodes_az1 = {
-  "node0" = "10.0.0.10"
-}
-
-etcd_nodes_az2 = {
-  "node1" = "10.0.1.10"
-}
-
-etcd_nodes_az3 = {
-  "node2" = "10.0.2.10"
-}
-
-# Autoscaling groups
-etcd_asg_name_az1 = "Etcd-asg1"
-etcd_asg_maxsize_az1 = "1"
-etcd_asg_minsize_az1 = "1"
-etcd_asg_normsize_az1 = "1"
-
-etcd_asg_name_az2 = "Etcd-asg2"
-etcd_asg_maxsize_az2 = "1"
-etcd_asg_minsize_az2 = "1"
-etcd_asg_normsize_az2 = "1"
-
-etcd_asg_name_az3 = "Etcd-asg3"
-etcd_asg_maxsize_az3 = "1"
-etcd_asg_minsize_az3 = "1"
-etcd_asg_normsize_az3 = "1"
-
-## Template variables
-
-cluster-domain           = "cluster.local"
-dns-service-ip           = "10.3.0.10"
-hyperkube-image          = "quay.io/coreos/hyperkube"
-hyperkube-tag            = "v1.5.1_coreos.0"
-pod-ip-range             = "10.2.0.0/16"
-service-cluster-ip-range = "10.3.0.0/24"
-
-
-###### kubemaster module
-# Launch config
-kubemasterlc_name = "Kubemaster-lc"
-bastion_lc_name = "kubebastion-lc"
-kubenode_lc_name = "kubenode-lc"
-
-# Autoscaling groups
-kubemaster_asg_name = "kubemaster-asg"
-kubemaster_asg_number_of_instances = "3"
-kubemaster_asg_minimum_number_of_instances = "3"
-
-bastion_asg_name = "kubebastion-asg"
-bastion_asg_number_of_instances = "1"
-bastion_asg_minimum_number_of_instances = "1"
-
-kubenode_asg_name = "kubenode-asg"
-kubenode_asg_number_of_instances = "2"
-kubenode_asg_minimum_number_of_instances = "2"

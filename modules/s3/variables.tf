@@ -64,3 +64,5 @@ variable "etcd_asg_maxsize_az3" {
   description = "The minimum number of instances the ASG should maintain"
   default     = 1
 }
+
+variable "kubernetes_image" {}

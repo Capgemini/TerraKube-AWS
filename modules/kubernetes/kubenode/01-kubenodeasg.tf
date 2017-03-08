@@ -17,6 +17,8 @@ data "template_file" "kubenode" {
     kubernetes_image    = "${element(split(":", var.kubernetes_image), 0)}"
     kubernetes_version  = "${element(split(":", var.kubernetes_image), 1)}"
     master-elb-dns      = "${var.master_elb_dns}"
+    dns-service-ip      = "${var.dns-service-ip}"
+    cluster-domain      = "${var.cluster-domain}"
   }
 }
 
@@ -69,7 +71,7 @@ resource "aws_autoscaling_group" "kubenode" {
 
   launch_configuration = "${aws_launch_configuration.launch_config.id}"
 
-  max_size                  = "${var.asg_number_of_instances}"
+  max_size                  = "${var.asg_maximum_number_of_instances}"
   min_size                  = "${var.asg_minimum_number_of_instances}"
   desired_capacity          = "${var.asg_number_of_instances}"
   health_check_grace_period = "${var.health_check_grace_period}"

@@ -56,6 +56,11 @@ variable "asg_minimum_number_of_instances" {
   default     = 1
 }
 
+variable "asg_maximum_number_of_instances" {
+  description = "The minimum number of instances the ASG should maintain"
+  default     = 1
+}
+
 variable "health_check_grace_period" {
   description = "Number of seconds for a health check to time out"
   default     = 300
@@ -97,3 +102,7 @@ variable "kubernetes_image" {
 }
 
 variable "master_elb_dns" {}
+
+variable "dns-service-ip" {}
+
+variable "cluster-domain" {}

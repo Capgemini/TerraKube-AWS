@@ -34,12 +34,15 @@ data "template_file" "kube-apiserver" {
   template = "${file("${path.cwd}/Manifests/kube-apiserver.yml")}"
 
   vars {
-    etcd_memberlist  = "${join(",", concat(formatlist("%s=https://%s:2380", keys(var.etcd_nodes_az1), values(var.etcd_nodes_az1)), formatlist("%s=https://%s:2380", keys(var.etcd_nodes_az2), values(var.etcd_nodes_az2)), formatlist("%s=https://%s:2380", keys(var.etcd_nodes_az3), values(var.etcd_nodes_az3)) ))}"
-    serviceiprange   = "${var.service-cluster-ip-range}"
-    mastercertobject = "${var.masterpem}"
-    masterkeyobject  = "${var.masterkey}"
-    cacertobject     = "${var.capem}"
-    apiservercount   = "${var.etcd_asg_maxsize_az1 + var.etcd_asg_maxsize_az2 + var.etcd_asg_maxsize_az3 }"
+    kubernetes_image         = "${var.kubernetes_image}"
+    etcd_memberlist          = "${join(",", concat(formatlist("%s=https://%s:2380", keys(var.etcd_nodes_az1), values(var.etcd_nodes_az1)), formatlist("%s=https://%s:2380", keys(var.etcd_nodes_az2), values(var.etcd_nodes_az2)), formatlist("%s=https://%s:2380", keys(var.etcd_nodes_az3), values(var.etcd_nodes_az3)) ))}"
+    service-cluster-ip-range = "${var.service-cluster-ip-range}"
+    mastercertobject         = "${var.masterpem}"
+    masterkeyobject          = "${var.masterkey}"
+    cacertobject             = "${var.capem}"
+    etcdcertobject           = "${var.etcdpem}"
+    etcdkeyobject            = "${var.etcdkey}"
+    apiservercount           = "${var.etcd_asg_maxsize_az1 + var.etcd_asg_maxsize_az2 + var.etcd_asg_maxsize_az3 }"
   }
 }
 
@@ -47,17 +50,24 @@ data "template_file" "kube-controllermanager" {
   template = "${file("${path.cwd}/Manifests/kube-controller-manager.yml")}"
 
   vars {
-    masterkeyobject = "${var.masterkey}"
-    cacertobject    = "${var.capem}"
+    kubernetes_image = "${var.kubernetes_image}"
+    masterkeyobject  = "${var.masterkey}"
+    cacertobject     = "${var.capem}"
   }
 }
 
 data "template_file" "kube-proxy" {
   template = "${file("${path.cwd}/Manifests/kube-proxy.yml")}"
-  vars     = {}
+
+  vars = {
+    kubernetes_image = "${var.kubernetes_image}"
+  }
 }
 
 data "template_file" "kube-scheduler" {
   template = "${file("${path.cwd}/Manifests/kube-scheduler.yml")}"
-  vars     = {}
+
+  vars = {
+    kubernetes_image = "${var.kubernetes_image}"
+  }
 }

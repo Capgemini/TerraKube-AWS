@@ -88,8 +88,8 @@ coreos:
         --allow-privileged=true \
         --api-servers=https://${master-elb-dns} \
         --cloud-provider=aws \
-        --cluster_dns=10.3.0.10 \
-        --cluster_domain=cluster.local \
+        --cluster_dns=${dns-service-ip} \
+        --cluster_domain=${cluster-domain} \
         --config=/etc/kubernetes/manifests \
         --kubeconfig=/etc/kubernetes/kubeconfig.yml \
         --register-node=true \

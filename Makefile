@@ -39,6 +39,9 @@ destroy:
 	@-rm -rf .terraform ||:
 	@-rm -rf .terragrunt ||:
 	@-rm -f Certs/*
+	@echo > modules/s3/Files/master_role_arn.txt
+	@echo > modules/s3/Files/worker_role_arn.txt
+	@echo > modules/s3/Files/root_arn.txt
 	@echo "${BLUE}❤ Kubernetes cluster has been deleted ${NC}"
 
 info:

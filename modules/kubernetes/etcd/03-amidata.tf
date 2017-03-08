@@ -20,7 +20,8 @@ data "template_file" "kubeetcd" {
     kubernetes_image     = "${element(split(":", var.kubernetes_image), 0)}"
     kubernetes_version   = "${element(split(":", var.kubernetes_image), 1)}"
     flannel_cidr         = "${var.flannel_cidr}"
-    serviceiprange       = "${var.service-cluster-ip-range}"
+    dns-service-ip       = "${var.dns-service-ip}"
+    cluster-domain       = "${var.cluster-domain}"
   }
 }
 

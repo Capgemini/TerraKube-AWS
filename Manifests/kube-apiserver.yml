@@ -7,28 +7,28 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-apiserver
-    image: quay.io/coreos/hyperkube:v1.5.2_coreos.0
+    image: ${kubernetes_image}
     command:
     - /hyperkube
     - apiserver
     - --insecure-bind-address=0.0.0.0
     - --etcd-servers=https://127.0.0.1:2379
     - --allow-privileged=true
-    - --service-cluster-ip-range=10.3.0.0/24
+    - --service-cluster-ip-range=${service-cluster-ip-range}
     - --secure-port=443
     - --advertise-address=0.0.0.0
     - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
-    - --tls-cert-file=/etc/ssl/kubernetes/master.pem
-    - --tls-ca-file=/etc/ssl/kubernetes/ca.pem
-    - --tls-private-key-file=/etc/ssl/kubernetes/masterkey.pem
-    - --client-ca-file=/etc/ssl/kubernetes/ca.pem
-    - --service-account-key-file=/etc/ssl/kubernetes/masterkey.pem
-    - --etcd-cafile=/etc/ssl/kubernetes/ca.pem
-    - --etcd-certfile=/etc/ssl/kubernetes/etcd.pem
-    - --etcd-keyfile=/etc/ssl/kubernetes/etcdkey.pem
-    - --kubelet-certificate-authority=/etc/ssl/kubernetes/ca.pem
-    - --kubelet-client-certificate=/etc/ssl/kubernetes/master.pem
-    - --kubelet-client-key=/etc/ssl/kubernetes/masterkey.pem
+    - --tls-cert-file=/etc/ssl/kubernetes/${mastercertobject}
+    - --tls-ca-file=/etc/ssl/kubernetes/${cacertobject}
+    - --tls-private-key-file=/etc/ssl/kubernetes/${masterkeyobject}
+    - --client-ca-file=/etc/ssl/kubernetes/${cacertobject}
+    - --service-account-key-file=/etc/ssl/kubernetes/${masterkeyobject}
+    - --etcd-cafile=/etc/ssl/kubernetes/${cacertobject}
+    - --etcd-certfile=/etc/ssl/kubernetes/${etcdcertobject}
+    - --etcd-keyfile=/etc/ssl/kubernetes/${etcdkeyobject}
+    - --kubelet-certificate-authority=/etc/ssl/kubernetes/${cacertobject}
+    - --kubelet-client-certificate=/etc/ssl/kubernetes/${mastercertobject}
+    - --kubelet-client-key=/etc/ssl/kubernetes/${masterkeyobject}
     - --runtime-config=extensions/v1beta1/networkpolicies=true
     - --anonymous-auth=false
     - --cloud-provider=aws

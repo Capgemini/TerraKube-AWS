@@ -195,4 +195,6 @@ variable "flannel_cidr" {
   default     = "10.2.0.0/16"
 }
 
-variable "service-cluster-ip-range" {}
+variable "dns-service-ip" {}
+
+variable "cluster-domain" {}
