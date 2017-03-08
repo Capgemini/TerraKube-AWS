@@ -11,38 +11,15 @@ resource "aws_security_group" "bastion" {
 
   # Allows inbound and outbound traffic from all instances in the VPC.
   ingress {
-    from_port = "0"
-    to_port   = "0"
-    protocol  = "-1"
-    self      = true
+    from_port   = "0"
+    to_port     = "0"
+    protocol    = "-1"
+    self        = true
+    cidr_blocks = ["${var.vpc_cidr}"]
   }
   ingress {
     from_port   = 22
     to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 8081
-    to_port     = 8081
     protocol    = "tcp"
     cidr_blocks = ["${var.iplock}"]
   }
@@ -57,7 +34,7 @@ resource "aws_security_group" "bastion" {
   }
   tags {
     KubernetesCluster = "${ var.name }"
-    Name              = "worker-k8s-${ var.name }"
+    Name              = "Bastion-k8s-${ var.name }"
     builtWith         = "terraform"
   }
 }

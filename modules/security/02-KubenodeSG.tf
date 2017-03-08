@@ -9,42 +9,13 @@ resource "aws_security_group" "kubenode" {
 
   ### Inbound rules
 
-  # Allows inbound and outbound traffic from all instances in the VPC.
+  # Allows inbound traffic from all instances in the VPC.
   ingress {
-    from_port = "0"
-    to_port   = "0"
-    protocol  = "-1"
-    self      = true
-  }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
-  }
-  ingress {
-    from_port   = 8081
-    to_port     = 8081
-    protocol    = "tcp"
-    cidr_blocks = ["${var.iplock}"]
+    from_port   = "0"
+    to_port     = "0"
+    protocol    = "-1"
+    self        = true
+    cidr_blocks = ["${var.vpc_cidr}"]
   }
 
   #outbound rule, no port restrictions
@@ -57,7 +28,7 @@ resource "aws_security_group" "kubenode" {
   }
   tags {
     KubernetesCluster = "${ var.name }"
-    Name              = "worker-k8s-${ var.name }"
+    Name              = "Kubenode-k8s-${ var.name }"
     builtWith         = "terraform"
   }
 }

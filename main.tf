@@ -52,12 +52,13 @@ module "security" {
   name       = "${var.cluster-name}"
   vpcid      = "${module.vpc.aws_vpc.id}"
   iplock     = "${var.iplock}"
+  vpc_cidr   = "${var.vpc_cidr}"
 }
 
 module "elbcreate" {
   source          = "./modules/elb/elbcreate"
   name            = "${var.cluster-name}"
-  security_groups = "${module.security.aws_security_group.kubemaster}"
+  security_groups = "${module.security.aws_security_group.elb}"
   subnets         = ["${module.vpc.aws_subnet.public1.id}", "${module.vpc.aws_subnet.public2.id}", "${module.vpc.aws_subnet.public3.id}"]
 }
 

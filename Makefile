@@ -12,7 +12,7 @@ NC := \033[0m
 all: prereqs plan apply
 	@echo "${GREEN}✓ terraform portion of 'make all' has completed ${NC}\n"
 	@echo "${GREEN}✓ waiting for cluster to become active (be patient) ${NC}\n"
-	@$(MAKE) wait-for-cluster
+	@$(MAKE) wait-for-cluster && sleep 5
 	@echo "${GREEN}✓ deploying addons (kubectl create -f Addons) ${NC}\n"
 	@$(MAKE) .addons
 	@$(MAKE) test-deployment

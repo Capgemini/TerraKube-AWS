@@ -6,8 +6,8 @@ output "aws_security_group.kubenode" {
   value = "${aws_security_group.kubenode.id}"
 }
 
-output "aws_security_group.etcd" {
-  value = "${aws_security_group.etcd.id}"
+output "aws_security_group.elb" {
+  value = "${aws_security_group.elb.id}"
 }
 
 output "aws_security_group.bastion" {

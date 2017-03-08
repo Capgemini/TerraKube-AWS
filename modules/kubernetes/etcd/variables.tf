@@ -146,11 +146,11 @@ variable "master_elb" {}
 
 variable "health_check_grace_period" {
   description = "Number of seconds for a health check to time out"
-  default     = 300
+  default     = 600
 }
 
 variable "health_check_type" {
-  default = "EC2"
+  default = "ELB"
 }
 
 variable "environment" {

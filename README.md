@@ -76,8 +76,8 @@ This will be further documented later. Demo includes use of Traefik as Ingress c
 
 ## Todo:
 
-- Document how each module works and the general structure
-- Clean up the variables, and add optional cool lambda, OpenVPN and other addon modules.
+- Document how each module works and the general structure, create a fancy Diagram
+- Add optional cool lambda, OpenVPN, DroneCI and other addon modules.
 
 ------------------------
 
