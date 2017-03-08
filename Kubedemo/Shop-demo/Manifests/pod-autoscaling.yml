@@ -1,0 +1,13 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: polyshop-autoscaler
+  namespace: polyshop
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: polyshop-blue
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
