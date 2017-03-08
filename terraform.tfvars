@@ -1,9 +1,9 @@
 ### Provider
-adminregion = "eu-west-1"
-adminprofile = "default"
-key_name = "terraform"
+adminregion     = "eu-west-1"
+adminprofile    = "default"
+key_name        = "terraform"
 public_key_path = "~/.ssh/id_rsa.pub"
-bucketname = "kubernetes-cert"
+bucketname      = "kubernetes-cert"
 
 ### Cluster specifications
 cluster-name = "terrakube"
@@ -11,16 +11,16 @@ cluster-name = "terrakube"
 cluster-domain           = "cluster.local"
 dns-service-ip           = "10.3.0.10"
 service-cluster-ip-range = "10.3.0.0/24"
-k8s-service-ip = "10.3.0.1"
+k8s-service-ip           = "10.3.0.1"
 kubernetes_image         = "quay.io/coreos/hyperkube:v1.5.2_coreos.0"
 pod-ip-range             = "10.2.0.0/16"
-placement_group = "false"
+placement_group          = "false"
 
 # AMI info
-ownerid = "595879546273"
-ami_name = "CoreOS"
-channel = "stable"
-virtualization_type ="hvm"
+ownerid   = "595879546273"
+ami_name  = "CoreOS"
+channel   = "stable"
+virtualization_type = "hvm"
 
 # Kubenode and bastion Autoscaling groups
 kubenode_ami_size = "t2.micro"
