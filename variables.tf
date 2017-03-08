@@ -34,7 +34,17 @@ variable "cluster-domain" {
 
 variable "dns-service-ip" {
   description = "The VIP (Virtual IP) address of the cluster DNS service"
+  default     = "10.3.0.10"
+}
+
+variable "service-cluster-ip-range" {
+  description = "The CIDR network to use for service cluster VIPs (Virtual IPs)"
   default     = "10.3.0.0/24"
+}
+
+variable "k8s-service-ip" {
+  description = "The VIP (Virtual IP) address of the Kubernetes API Service. This must be set to the first IP in service-cluster range"
+  default     = "10.3.0.1"
 }
 
 variable "kubernetes_image" {
@@ -44,10 +54,6 @@ variable "kubernetes_image" {
 
 variable "pod-ip-range" {
   description = "The CIDR network to use for pod IPs"
-}
-
-variable "service-cluster-ip-range" {
-  description = "The CIDR network to use for service cluster VIPs (Virtual IPs)"
 }
 
 # AMI info

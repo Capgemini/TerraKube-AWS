@@ -7,7 +7,7 @@ provider "aws" {
 module "tls" {
   source         = "./modules/tls"
   internal-tld   = "${var.internal-tld}"
-  k8s-serviceip  = "${var.dns-service-ip}"
+  k8s-serviceip  = "${var.k8s-service-ip}"
   adminregion    = "${var.adminregion}"
   capem          = "${var.capem}"
   cakey          = "${var.cakey}"

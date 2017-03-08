@@ -10,9 +10,10 @@ cluster-name = "terrakube"
 ## Template variables
 cluster-domain           = "cluster.local"
 dns-service-ip           = "10.3.0.10"
+service-cluster-ip-range = "10.3.0.0/24"
+k8s-service-ip = "10.3.0.1"
 kubernetes_image         = "quay.io/coreos/hyperkube:v1.5.2_coreos.0"
 pod-ip-range             = "10.2.0.0/16"
-service-cluster-ip-range = "10.3.0.0/24"
 
 # AMI info
 ownerid = "595879546273"
