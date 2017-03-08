@@ -47,6 +47,10 @@ info:
 	kubectl get po
 	kubectl cluster-info
 
+metrics:
+	kubectl create -f Kubedemo/Metrics
+	@echo "${GREEN}❤ Heapster, InfluxDB and Grafana have been configured ${NC}"
+
 plan:
 	terraform fmt
 	@echo

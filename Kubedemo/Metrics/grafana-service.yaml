@@ -6,12 +6,15 @@ metadata:
     # If you are NOT using this as an addon, you should comment out this line.
     kubernetes.io/cluster-service: 'true'
     kubernetes.io/name: monitoring-grafana
+    dns: route53
+  annotations:
+    domainName: "grafana.capgemini-demo.com"
   name: monitoring-grafana
   namespace: kube-system
 spec:
   # In a production setup, we recommend accessing Grafana through an external Loadbalancer
   # or through a public IP.
-  # type: LoadBalancer
+  type: LoadBalancer
   # You could also use NodePort to expose the service at a randomly-generated port
   # type: NodePort
   ports:
