@@ -6,8 +6,7 @@ public_key_path = "~/.ssh/id_rsa.pub"
 bucketname      = "kubernetes-cert"
 
 ### Cluster specifications
-cluster-name = "terrakube"
-## Template variables
+cluster-name             = "terrakube"
 cluster-domain           = "cluster.local"
 dns-service-ip           = "10.3.0.10"
 service-cluster-ip-range = "10.3.0.0/24"

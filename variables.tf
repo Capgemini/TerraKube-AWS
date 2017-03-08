@@ -26,7 +26,6 @@ variable "cluster-name" {
   description = "The name of the Kubernetes cluster used in tags"
 }
 
-## Template variables
 variable "cluster-domain" {
   description = "The internal kubernetes cluster-domain"
   default     = "cluster.local"
