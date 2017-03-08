@@ -6,37 +6,19 @@ data "template_file" "kubearn" {
   }
 }
 
-resource "null_resource" "kubearn" {
-  depends_on = ["null_resource.roledependency"]
+data "aws_caller_identity" "current" {}
 
-  provisioner "local-exec" {
-    command = "echo arn:aws:iam::$(bash ${path.module}/Files/workerarn.sh):role/worker_role > ${path.module}/Files/worker_role_arn.txt"
-  }
-}
-
-resource "null_resource" "kubearn2" {
-  depends_on = ["null_resource.roledependency"]
-
-  provisioner "local-exec" {
-    command = "echo arn:aws:iam::$(bash ${path.module}/Files/workerarn.sh):role/master_role > ${path.module}/Files/master_role_arn.txt"
-  }
-}
-
-resource "null_resource" "arn" {
-  depends_on = ["null_resource.roledependency"]
-
-  provisioner "local-exec" {
-    command = "echo arn:aws:iam::$(bash ${path.module}/Files/rootarn.sh):root > ${path.module}/Files/root_arn.txt"
-  }
+output "account_id" {
+  value = "${data.aws_caller_identity.current.account_id}"
 }
 
 data "template_file" "kmspolicy" {
-  depends_on = ["null_resource.arn", "null_resource.kubearn", "null_resource.kubearn2"]
+  depends_on = ["data.aws_caller_identity.current"]
   template   = "${file("${path.module}/Files/kmspolicy.json.tpl")}"
 
   vars {
-    arn       = "${replace(file("${path.module}/Files/worker_role_arn.txt"), "\n", "")}"
-    masterarn = "${replace(file("${path.module}/Files/master_role_arn.txt"), "\n", "")}"
-    rootarn   = "${replace(file("${path.module}/Files/root_arn.txt"), "\n", "")}"
+    arn       = "arn:aws:iam::${data.aws_caller_identity.current}:role/worker_role"
+    masterarn = "arn:aws:iam::${data.aws_caller_identity.current}:role/master_role"
+    rootarn   = "arn:aws:iam::${data.aws_caller_identity.current}:root"
   }
 }
