@@ -58,7 +58,7 @@ variable "pod-ip-range" {
 
 variable "placement_group" {
   description = "Boolean value, set to true if wanting to host kubenodes in an AWS placement group for low inter-pod latency (nodes in same rack)"
-  default = "false"
+  default     = "false"
 }
 
 # AMI info

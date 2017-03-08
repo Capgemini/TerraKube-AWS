@@ -121,7 +121,7 @@ resource "aws_autoscaling_group" "kubenode_noplacementgroup" {
   tag {
     key                 = "Name"
     value               = "kubenode"
-    placementgroup = "${var.placement_group}"
+    placementgroup      = "${var.placement_group}"
     propagate_at_launch = true
   }
 
