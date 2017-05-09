@@ -1,7 +1,5 @@
 # TerraKube - Formerly Prototype-X
 
-## This repo is currently in Beta.
-
 Welcome to Terrakube, a project of mine brought from personal passion and frustration with current Kubernetes offerings on AWS.
 
 This repo is designed to equip you with everything you require to provision a Highly Available Kubernetes Cluster on AWS.
@@ -20,14 +18,6 @@ Prerequisites: Install Terraform, jq and AWS cli. Have access to BASH!
 3. To see cluster-info - make info
 4. To bring up dashboard - make dashboard
 5. To destroy - make destroy, please ensure you kubectl delete any services (ELB) prior to this.
-```
-
-## To push state to remote S3 and generate a Terragrunt config file:
-
-```
-'make create-remote' && 'make terragrunt'
-
-To delete remote state bucket: 'make delete-remote' - careful with this one.
 ```
 
 ## General structure - in depth will be done later:
@@ -76,6 +66,7 @@ This will be further documented later. Demo includes use of Traefik as Ingress c
 
 ## Todo:
 
+- Add support for the newer inbuilt Terraform features (remote state locking etc)
 - Document how each module works and the general structure, create a fancy Diagram
 - Add optional cool lambda, OpenVPN, DroneCI and other addon modules.
 
