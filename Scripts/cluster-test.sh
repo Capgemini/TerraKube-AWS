@@ -12,7 +12,7 @@ echo "❤ Polling for cluster life - this could take a minute or more"
 
 _retry "❤ Waiting for DNS to resolve for ${ELB}" ping -c1 "${ELB}"
 _retry "❤ Curling apiserver external elb" curl --insecure --silent "https://${ELB}"
-sleep 5
+sleep 15
 _retry "❤ Trying to connect to cluster with kubectl" kubectl cluster-info
 
 kubectl cluster-info
