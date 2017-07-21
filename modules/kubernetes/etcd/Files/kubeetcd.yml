@@ -29,6 +29,7 @@ coreos:
         EnvironmentFile=/etc/etcd-environment
         EnvironmentFile=/run/smilodon/environment
         ExecStartPre=/usr/bin/mkdir -p /var/lib/etcd2
+        ExecStartPre=/usr/bin/chmod 0744 /var/lib/etcd2
         ExecStartPre=/usr/bin/chown -R etcd:etcd /etc/ssl/kubernetes /var/lib/etcd2
         ExecStartPre=/usr/bin/systemctl --quiet is-active kmsctl-certs.service
         ExecStart=
@@ -66,7 +67,7 @@ coreos:
       ExecStartPre=/usr/bin/mkdir -p /etc/ssl/kubernetes
       ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
       ExecStartPre=/usr/bin/chown -R root:root /etc/kubernetes/manifests
-      ExecStartPre=/usr/bin/chmod 0744 /etc/ssl/kubernetes /var/lib/etcd2
+      ExecStartPre=/usr/bin/chmod 0744 /etc/ssl/kubernetes
       ExecStartPre=/usr/bin/wget https://github.com/gambol99/kmsctl/releases/download/v1.0.4/kmsctl-linux-amd64 -O /opt/bin/kmsctl
       ExecStartPre=/usr/bin/chmod +x /opt/bin/kmsctl
       ExecStartPre=/opt/bin/kmsctl --region ${region} get -b ${bucket} -d /etc/ssl/kubernetes/ ${etcdcertobject}
@@ -274,3 +275,5 @@ write_files:
     ETCDCTL_CA_FILE=/etc/ssl/kubernetes/${cacertobject}
     ETCDCTL_CERT_FILE=/etc/ssl/kubernetes/${etcdcertobject}
     ETCDCTL_KEY_FILE=/etc/ssl/kubernetes/${etcdkeyobject}
+    ETCD_HEARTBEAT_INTERVAL=6000
+    ETCD_ELECTION_TIMEOUT=30000
