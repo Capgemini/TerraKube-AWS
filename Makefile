@@ -18,7 +18,7 @@ all: prereqs plan apply
 	@$(MAKE) test-deployment
 	@echo "${GREEN}✓ Launched test busybox deployment ${NC}\n"
 	@$(MAKE) info
-	@echo "${GREEN}✓ Terrakube deployment complete, to see kube dashboard - 'make dashboard'  ${NC}\n"
+	@echo "${GREEN}✓ Terrakube deployment complete, to see kube dashboard, wait for dashboard pod to be deployed and then run - 'make dashboard'  ${NC}\n"
 	@echo "${GREEN}✓ To delete the TerraKube cluster - 'make destroy' ${NC}\n"
 
 apply:
