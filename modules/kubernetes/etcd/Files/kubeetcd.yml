@@ -275,5 +275,3 @@ write_files:
     ETCDCTL_CA_FILE=/etc/ssl/kubernetes/${cacertobject}
     ETCDCTL_CERT_FILE=/etc/ssl/kubernetes/${etcdcertobject}
     ETCDCTL_KEY_FILE=/etc/ssl/kubernetes/${etcdkeyobject}
-    ETCD_HEARTBEAT_INTERVAL=6000
-    ETCD_ELECTION_TIMEOUT=30000
