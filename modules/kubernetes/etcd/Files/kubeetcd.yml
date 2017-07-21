@@ -28,6 +28,7 @@ coreos:
         RuntimeDirectoryMode=0700
         EnvironmentFile=/etc/etcd-environment
         EnvironmentFile=/run/smilodon/environment
+        ExecStartPre=/usr/bin/mkdir -p /var/lib/etcd2
         ExecStartPre=/usr/bin/chown -R etcd:etcd /etc/ssl/kubernetes /var/lib/etcd2
         ExecStartPre=/usr/bin/systemctl --quiet is-active kmsctl-certs.service
         ExecStart=
@@ -60,15 +61,11 @@ coreos:
       [Unit]
       Description=KMSCtl - download certs
       [Service]
-      Type=notify
-      NotifyAccess=all
       RemainAfterExit=yes
       ExecStartPre=/usr/bin/mkdir -p /opt/bin
-      ExecStartPre=/usr/bin/mkdir -p /var/lib/etcd2
       ExecStartPre=/usr/bin/mkdir -p /etc/ssl/kubernetes
       ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
-      ExecStartPre=/usr/bin/chown -R etcd:etcd /var/lib/etcd2
-      ExecStartPre=/usr/bin/chown -R root:root /etc/kubernetes/manifests /etc/ssl/kubernetes
+      ExecStartPre=/usr/bin/chown -R root:root /etc/kubernetes/manifests
       ExecStartPre=/usr/bin/chmod 0744 /etc/ssl/kubernetes /var/lib/etcd2
       ExecStartPre=/usr/bin/wget https://github.com/gambol99/kmsctl/releases/download/v1.0.4/kmsctl-linux-amd64 -O /opt/bin/kmsctl
       ExecStartPre=/usr/bin/chmod +x /opt/bin/kmsctl
@@ -86,7 +83,7 @@ coreos:
       ExecStartPre=/usr/bin/bash -c "chmod 0644 /etc/ssl/kubernetes/* /etc/kubernetes/manifests/*"
       ExecStartPre=/usr/bin/bash -c "cp -f /etc/ssl/kubernetes/* /etc/ssl/certs"
       ExecStartPre=/usr/sbin/update-ca-certificates
-      ExecStart=/usr/bin/systemd-notify --ready --status="successfully downloaded the certs"
+      ExecStart=/bin/ls /etc/ssl/kubernetes/${cacertobject} /etc/ssl/kubernetes/${etcdkeyobject} /etc/ssl/kubernetes/${mastercertobject} /etc/ssl/kubernetes/${masterkeyobject} /etc/ssl/kubernetes/${etcdproxycertobject} /etc/ssl/kubernetes/${etcdproxykeyobject} /etc/ssl/kubernetes/${cacertobject}
       Restart=on-failure
       RestartSec=10
       TimeoutStartSec=300
