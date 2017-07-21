@@ -33,7 +33,7 @@ ELB creation with attachment to the Masters (Only via port 443)
 ### Kubernetes modules:
 
 Etcd/Master - Currently the etcd cluster is being hosted on the master as per Google recommendation however this can easily be isolated if required. The Master nodes all run Smilodon for EBS and ENI attachment (following the EBS per IP recommendation).
-Bastion - This is configured to allow you to SSH in and run "sudo etcdctl cluster-health" (etcd proxy). An OpenVPN module will be added soon.
+Bastion - This is configured to allow you to SSH in and run "sudo -E etcdctl cluster-health" (etcd proxy). An OpenVPN module will be added soon.
 Kubenodes - Probably the most basic of the bunch, cloud-config similar to the bastion but with the kubelet-wrapper installed.
 
 ### Route53 module:
