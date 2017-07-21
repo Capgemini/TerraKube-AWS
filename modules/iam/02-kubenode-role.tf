@@ -23,5 +23,5 @@ resource "aws_iam_role_policy" "worker_policy" {
 resource "aws_iam_instance_profile" "worker_profile" {
   depends_on = ["aws_iam_role.worker_role", "aws_iam_role_policy.worker_policy"]
   name       = "worker_profile"
-  role       = ["${aws_iam_role.worker_role.name}"]
+  role       = "${aws_iam_role.worker_role.name}"
 }
