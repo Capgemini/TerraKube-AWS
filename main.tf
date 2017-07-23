@@ -88,6 +88,7 @@ module "s3" {
   name         = "${var.cluster-name}"
   bucketname   = "${var.bucketname}"
   worker-role  = "${var.worker_role_name}"
+  master-role  = "${var.master_role_name}"
   capem        = "${var.capem}"
   cakey        = "${var.cakey}"
   etcdpem      = "${var.etcdpem}"
